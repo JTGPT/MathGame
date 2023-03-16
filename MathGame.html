@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JackGPT Math Game 1</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background-color: rgba(0, 0, 0, 0.5);
+        }
+
+        body::before {
+            content: "";
+            background-image: url('https://i.ibb.co/9WpQgZK/JGPT-LOGO.png');
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            filter: blur(3px);
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+        }
+
+        .container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            background-color: transparent;
+        }
+        .logo {
+            margin-bottom: 20px;
+        }
+        .game-container {
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+            background-color: transparent;
+            padding: 20px;
+            border-radius: 10px;
+            border: none;
+        }
+        .game, .highscores {
+            background-color: rgba(169, 169, 169, 0.5);
+            padding: 20px;
+            border-radius: 10px;
+            width: 300px;
+        }
+        .game {
+            margin-right: 20px;
+        }
+        h1, h2 {
+            font-family: Arial, sans-serif;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <img src="https://i.ibb.co/1RQVbFW/jackgptlogo.png" alt="Logo" class="logo">
+        <div class="game-container">
+            <div class="game">
+                <h1>JackGPT Math Game 1</h1>
+                <p id="question"></p>
+                <input type="number" id="answer" min="0">
+                <button id="submitButton" onclick="submitAnswer()">Submit</button>
+                <p id="result"></p>
+                <p>Score: <span id="score">0</span></p>
+                <p>Question: <span id="questionNumber">1</span></p>
+                <button id="additionButton">+ Mode</button>
+                <button id="subtractionButton">- Mode</button>
+            </div>
+            <div class="highscores">
+                <h2>Hiscores</h2>
+                <h3>Addition</h3>
+                <ul id="additionHighscoreList"></ul>
+                <h3>Subtraction</h3>
+                <ul id="subtractionHighscoreList"></ul>
+                <button onclick="clearHighscores()">Reset Hiscores</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const questionElement = document.getElementById("question");
+        const answerElement = document.getElementById("answer");
+        const resultElement = document.getElementById("result");
+        const scoreElement = document.getElementById("score");
+        const questionNumberElement = document.getElementById("questionNumber");
+        const additionHighscoreListElement = document.getElementById("additionHighscoreList");
+        const subtractionHighscoreListElement = document.getElementById("subtractionHighscoreList");
+        const additionButton = document.getElementById("additionButton");
+        const subtractionButton = document.getElementById("subtractionButton");
+
+        let score = 0;
+        let questionNumber = 1;
+        let correctAnswer;
+        let gameMode = 'addition';
+
+        additionButton.addEventListener('click', () => switchMode('addition'));
+        subtractionButton.addEventListener('click', () => switchMode('subtraction'));
+
+        function switchMode(mode) {
+            gameMode = mode;
+            resetGame();
+            displayHighscores();
+        }
+
+        function generateQuestion() {
+            let a = Math.floor(Math.random() * (questionNumber * 2)) + 1;
+            let b = Math.floor(Math.random() * (questionNumber * 2)) + 1;
+            let operator = gameMode === 'addition' ? '+' : '-';
+            correctAnswer = operator === '+' ? a + b : a - b;
+            questionElement.textContent = `${a} ${operator} ${b} = `;
+        }
+
+        function submitAnswer() {
+            let answer = parseInt(answerElement.value);
+            if (answer === correctAnswer) {
+                score += questionNumber % 5 === 0 ? 5 : 1;
+                resultElement.textContent = "Correct!";
+                questionNumber++;
+                questionNumberElement.textContent = questionNumber;
+                scoreElement.textContent = score;
+                answerElement.value = "";
+                generateQuestion();
+            } else {
+                let playerName = prompt("Incorrect! Game Over. Please enter your name:");
+                if (playerName) {
+                    resultElement.textContent = `Game Over, ${playerName}! Your score: ${score}`;
+                    addHighscore(playerName, score);
+                    displayHighscores();
+                    resetGame();
+                }
+            }
+        }
+
+        function resetGame() {
+            score = 0;
+            questionNumber = 1;
+            scoreElement.textContent = score;
+            questionNumberElement.textContent = questionNumber;
+            resultElement.textContent = "";
+            generateQuestion();
+        }
+
+        function addHighscore(playerName, newScore) {
+            let highscoresKey = gameMode === 'addition' ? "additionHighscores" : "subtractionHighscores";
+            let highscores = JSON.parse(localStorage.getItem(highscoresKey)) || [];
+            highscores.push({ name: playerName, score: newScore });
+            highscores.sort((a, b) => b.score - a.score);
+            localStorage.setItem(highscoresKey, JSON.stringify(highscores));
+        }
+
+        function displayHighscores() {
+            let highscoresKey = gameMode === 'addition' ? "additionHighscores" : "subtractionHighscores";
+            let highscoreListElement = gameMode === 'addition' ? additionHighscoreListElement : subtractionHighscoreListElement;
+            let highscores = JSON.parse(localStorage.getItem(highscoresKey)) || [];
+            highscoreListElement.innerHTML = "";
+            if (highscores.length > 0) {
+                highscores.slice(0, 10).forEach((highscore, index) => {
+                    let listItem = document.createElement("li");
+                    listItem.textContent = `${highscore.name}: ${highscore.score}`;
+                    highscoreListElement.appendChild(listItem);
+                });
+            }
+        }
+
+        function clearHighscores() {
+            localStorage.removeItem("additionHighscores");
+            localStorage.removeItem("subtractionHighscores");
+            displayHighscores();
+        }
+
+        displayHighscores();
+        generateQuestion();
+
+        answerElement.addEventListener('keydown', function (event) {
+            if (event.key === 'Enter') {
+                submitAnswer();
+            }
+        });
+    </script>
+</body>
+</html>
